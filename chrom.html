@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>gmax's New Page</title>
+<style>
+/* ОСНОВНАЯ СТРУКТУРА */
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+body {
+    background: #202124;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    color: #e8eaed;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ПАНЕЛЬ ЗАКЛАДОК (ОБНОВЛЕННАЯ) */
+#bookmarks-bar {
+    width: 100%;
+    background: #2b2c2f;
+    padding: 2px 10px;
+    display: flex;
+    flex-direction: row;
+    gap: 4px; /* Минимальное расстояние между закладками */
+    overflow-x: auto;
+    white-space: nowrap;
+    border-bottom: 1px solid #3c4043;
+    box-sizing: border-box;
+    min-height: 32px;
+    align-items: center;
+    z-index: 10;
+}
+#bookmarks-bar::-webkit-scrollbar { height: 3px; }
+#bookmarks-bar::-webkit-scrollbar-thumb { background: #5f6368; }
+
+.bm-link {
+    color: #e8eaed;
+    text-decoration: none;
+    font-size: 12px;
+    opacity: 0.9;
+    padding: 4px 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Расстояние между иконкой и текстом */
+    transition: background 0.2s;
+}
+.bm-link:hover { background: #3c4043; }
+
+.bm-link img {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    object-fit: contain;
+}
+
+/* КОНТЕЙНЕР ПЛИТОК */
+.main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 10vh;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 110px);
+    gap: 22px;
+    max-width: 1000px;
+    width: 100%;
+    justify-content: center;
+    padding: 20px;
+}
+
+.tile-wrapper {
+    position: relative;
+    width: 110px;
+    height: 110px;
+}
+
+.tile {
+    width: 110px;
+    height: 110px;
+    background: #2b2c2f;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    color: #e8eaed;
+    transition: 0.15s;
+    overflow: hidden;
+}
+
+.tile:hover {
+    background: #3a3b3f;
+    transform: translateY(-5px);
+}
+
+.tile img {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 6px;
+    border-radius: 20px;
+    object-fit: cover;
+}
+
+.tile span {
+    font-size: 12px;
+    opacity: 0.9;
+    text-align: center;
+    width: 80%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.footer-tag {
+    position: fixed;
+    bottom: 12px;
+    left: 15px;
+    font-size: 10px;
+    color: #5f6368;
+    opacity: 0.4;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* ИНТЕРФЕЙС */
+.edit-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    border: none;
+    color: white;
+}
+.tile-wrapper:hover .edit-btn { display: flex; }
+
+.add-tile { border: 2px dashed #3c4043; background: transparent; cursor: pointer; }
+.add-tile span { font-size: 30px; opacity: 0.5; }
+
+/* МОДАЛКА */
+#modalOverlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+.modal {
+    background: #2b2c2f;
+    padding: 24px;
+    border-radius: 20px;
+    width: 320px;
+}
+.modal h3 { margin-top: 0; font-weight: normal; font-size: 18px; }
+.modal input {
+    width: 100%;
+    background: #202124;
+    border: 1px solid #3c4043;
+    color: #e8eaed;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+.modal-buttons { display: flex; justify-content: flex-end; gap: 10px; }
+.btn { padding: 8px 16px; border-radius: 8px; cursor: pointer; border: none; font-size: 13px; }
+.btn-save { background: #8ab4f8; color: #202124; }
+.btn-delete { background: #f28b82; color: #202124; margin-right: auto; }
+.btn-cancel { background: transparent; color: #9aa0a6; }
+
+.import-btn {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    background: #303134;
+    color: #9aa0a6;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 11px;
+    opacity: 0.2;
+}
+.import-btn:hover { opacity: 0.8; }
+</style>
+</head>
+
+<body>
+
+<div id="bookmarks-bar"></div>
+
+<div class="main-wrapper">
+    <div class="grid" id="mainGrid"></div>
+</div>
+
+<div class="footer-tag">gmax labs =P</div>
+
+<button class="import-btn" onclick="document.getElementById('fileInput').click()">Import HTML Bookmarks</button>
+<input type="file" id="fileInput" style="display:none">
+
+<div id="modalOverlay">
+    <div class="modal">
+        <h3 id="modalTitle">Edit Item</h3>
+        <label style="font-size: 11px; color: #9aa0a6;">Title</label>
+        <input type="text" id="inputName">
+        <label style="font-size: 11px; color: #9aa0a6;">URL</label>
+        <input type="text" id="inputUrl">
+        <label style="font-size: 11px; color: #9aa0a6;">Icon URL (optional)</label>
+        <input type="text" id="inputImg">
+        <div class="modal-buttons">
+            <button class="btn btn-delete" id="btnDelete">Delete</button>
+            <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-save" onclick="saveModal()">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const grid = document.getElementById('mainGrid');
+const bar = document.getElementById('bookmarks-bar');
+const modalOverlay = document.getElementById('modalOverlay');
+let currentEditType = null; // 'tile' or 'bookmark'
+let currentEditIndex = null;
+
+// ДАННЫЕ
+const defaultTiles = [
+    { title: 'Hotfix', href: 'https://hotfix.arbostar.com', icon: 'https://static.crozdesk.com/web_app_library/providers/logos/000/008/958/box/arbostar-1669211443-logo.png?1669211443' },
+    { title: 'Jira', href: 'https://arbostar.atlassian.net/jira/software/c/projects/AWB/boards/113', icon: 'https://www.atlassian.com/favicon.ico' }
+];
+
+let tilesData = JSON.parse(localStorage.getItem('tiles_order')) || defaultTiles;
+let bookmarksData = JSON.parse(localStorage.getItem('custom_bookmarks')) || [];
+
+function getFavicon(url) {
+    return `https://www.google.com/s2/favicons?sz=64&domain=${url}`;
+}
+
+// ОТРИСОВКА БАРА
+function renderBookmarks() {
+    bar.innerHTML = '';
+    bookmarksData.forEach((bm, index) => {
+        const a = document.createElement('a');
+        a.className = 'bm-link';
+        a.href = bm.url;
+        
+        const iconSrc = bm.icon || getFavicon(bm.url);
+        a.innerHTML = `<img src="${iconSrc}" onerror="this.src='https://www.google.com/favicon.ico'"> ${bm.title}`;
+        
+        // ПКМ для редактирования закладки
+        a.oncontextmenu = (e) => {
+            e.preventDefault();
+            openModal('bookmark', index);
+        };
+        bar.appendChild(a);
+    });
+}
+
+// ОТРИСОВКА СЕТКИ
+function renderGrid() {
+    grid.innerHTML = '';
+    tilesData.forEach((item, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'tile-wrapper';
+        const iconSrc = item.icon || getFavicon(item.href);
+        
+        wrapper.innerHTML = `
+            <button class="edit-btn" onclick="openModal('tile', ${index})">⋮</button>
+            <a class="tile" href="${item.href}">
+                <img src="${iconSrc}" onerror="this.src='https://www.google.com/favicon.ico'">
+                <span>${item.title}</span>
+            </a>
+        `;
+        grid.appendChild(wrapper);
+    });
+
+    const addBtn = document.createElement('div');
+    addBtn.className = 'tile add-tile';
+    addBtn.innerHTML = '<span>+</span>';
+    addBtn.onclick = () => openModal('tile', null);
+    grid.appendChild(addBtn);
+}
+
+// МОДАЛКА
+function openModal(type, index) {
+    currentEditType = type;
+    currentEditIndex = index;
+    const data = (type === 'tile') ? tilesData : bookmarksData;
+    const btnDelete = document.getElementById('btnDelete');
+
+    if (index !== null) {
+        document.getElementById('modalTitle').innerText = 'Edit ' + (type === 'tile' ? 'Tile' : 'Bookmark');
+        document.getElementById('inputName').value = data[index].title;
+        document.getElementById('inputUrl').value = (type === 'tile' ? data[index].href : data[index].url);
+        document.getElementById('inputImg').value = data[index].icon || '';
+        btnDelete.style.display = 'block';
+        btnDelete.onclick = () => deleteItem();
+    } else {
+        document.getElementById('modalTitle').innerText = 'Add New Tile';
+        document.getElementById('inputName').value = '';
+        document.getElementById('inputUrl').value = '';
+        document.getElementById('inputImg').value = '';
+        btnDelete.style.display = 'none';
+    }
+    modalOverlay.style.display = 'flex';
+}
+
+function closeModal() { modalOverlay.style.display = 'none'; }
+
+function saveModal() {
+    const name = document.getElementById('inputName').value;
+    const url = document.getElementById('inputUrl').value;
+    const icon = document.getElementById('inputImg').value;
+
+    const newItem = { title: name, icon: icon };
+    if (currentEditType === 'tile') newItem.href = url; else newItem.url = url;
+
+    if (currentEditType === 'tile') {
+        if (currentEditIndex !== null) tilesData[currentEditIndex] = newItem;
+        else tilesData.push(newItem);
+        localStorage.setItem('tiles_order', JSON.stringify(tilesData));
+        renderGrid();
+    } else {
+        bookmarksData[currentEditIndex] = newItem;
+        localStorage.setItem('custom_bookmarks', JSON.stringify(bookmarksData));
+        renderBookmarks();
+    }
+    closeModal();
+}
+
+function deleteItem() {
+    if (currentEditType === 'tile') {
+        tilesData.splice(currentEditIndex, 1);
+        localStorage.setItem('tiles_order', JSON.stringify(tilesData));
+        renderGrid();
+    } else {
+        bookmarksData.splice(currentEditIndex, 1);
+        localStorage.setItem('custom_bookmarks', JSON.stringify(bookmarksData));
+        renderBookmarks();
+    }
+    closeModal();
+}
+
+// ИМПОРТ
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(e.target.result, 'text/html');
+        const links = doc.querySelectorAll('dt > a');
+        const bms = [];
+        links.forEach(link => {
+            if (link.href && !link.href.startsWith('javascript')) {
+                bms.push({ title: link.textContent || "No Title", url: link.href, icon: '' });
+            }
+        });
+        bookmarksData = bms;
+        localStorage.setItem('custom_bookmarks', JSON.stringify(bookmarksData));
+        renderBookmarks();
+    };
+    reader.readAsText(file);
+});
+
+// СТАРТ
+window.addEventListener('DOMContentLoaded', () => {
+    renderGrid();
+    renderBookmarks();
+});
+</script>
+</body>
+</html>
